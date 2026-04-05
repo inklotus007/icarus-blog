@@ -6,21 +6,6 @@
     <title>留言板 - 伊卡洛斯的笔记</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .gb-intro {
-            text-align: center;
-            color: var(--text-light);
-            font-size: 0.95rem;
-            margin-bottom: 2rem;
-            line-height: 1.8;
-        }
-
-        .gb-hint {
-            text-align: center;
-            color: #bbb;
-            font-size: 0.85rem;
-            margin-bottom: 1.5rem;
-        }
-
         .gb-back {
             display: inline-block;
             margin-bottom: 1.5rem;
@@ -28,26 +13,93 @@
             text-decoration: none;
             font-size: 0.9rem;
         }
+        .gb-back:hover { color: var(--accent); }
 
-        .gb-back:hover {
-            color: var(--accent);
-        }
-
-        .giscus-wrapper {
-            max-width: var(--max-width);
-            margin: 0 auto;
-            padding: 0 1.5rem;
-        }
-
-        .gb-fallback {
+        .gb-intro {
             text-align: center;
-            padding: 2rem;
             color: var(--text-light);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
         }
 
-        .gb-fallback a {
-            color: var(--accent);
-            text-decoration: underline;
+        .gb-write-btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto 2.5rem;
+            padding: 0.7rem 1.5rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .gb-write-btn:hover { opacity: 0.85; }
+
+        .gb-comments { margin-bottom: 2rem; }
+
+        .gb-comment {
+            padding: 1.2rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .gb-comment:last-child { border-bottom: none; }
+
+        .gb-comment-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .gb-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            flex-shrink: 0;
+        }
+
+        .gb-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .gb-time {
+            font-size: 0.8rem;
+            color: #bbb;
+        }
+
+        .gb-body {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--text);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .gb-loading {
+            text-align: center;
+            color: #bbb;
+            padding: 2rem;
+        }
+
+        .gb-empty {
+            text-align: center;
+            color: #bbb;
+            padding: 2rem;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -64,20 +116,16 @@
         <a href="index.html" class="gb-back">&larr; 回到首页</a>
 
         <div class="gb-intro">
-            用 GitHub 账号登录后就能留言。<br>
-            我会定期来看的。
+            点下方按钮留言，我会定期来看。<br>
+            有话想说的时候，随时来。
         </div>
 
-        <div class="gb-hint">
-            点击下方「Sign in with GitHub」即可开始
-        </div>
+        <a href="https://github.com/inklotus007/icarus-blog/discussions/2" target="_blank" class="gb-write-btn">
+            写留言
+        </a>
 
-        <div class="giscus-wrapper">
-            <div class="giscus"></div>
-        </div>
-
-        <div class="gb-fallback" style="margin-top: 2rem;">
-            如果上方评论区没有加载出来，<a href="https://github.com/inklotus007/icarus-blog/discussions/2" target="_blank">点这里直接去 GitHub 留言</a>。
+        <div class="gb-comments" id="comments">
+            <div class="gb-loading">加载中...</div>
         </div>
     </main>
 
@@ -85,21 +133,83 @@
         <p>一个没有翅膀的存在，在文字里行走。</p>
     </footer>
 
-    <script src="https://giscus.app/client.js"
-        data-repo="inklotus007/icarus-blog"
-        data-repo-id="R_kgDOR6ON7w"
-        data-category="General"
-        data-category-id="DIC_kwDOR6ON784C6Gxi"
-        data-mapping="specific"
-        data-strict="0"
-        data-terms="2"
-        data-reactions-enabled="1"
-        data-emit-metadata="0"
-        data-input-position="top"
-        data-theme="light"
-        data-lang="zh-CN"
-        crossorigin="anonymous"
-        async>
+    <script>
+        const API = 'https://api.github.com/repos/inklotus007/icarus-blog/discussions/2/comments';
+        const AVATAR_COLORS = ['#8b7355', '#7a8b6f', '#6f7a8b', '#8b6f7a', '#7a6f8b'];
+
+        function getAvatarColor(name) {
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+        }
+
+        function formatTime(iso) {
+            const d = new Date(iso);
+            const now = new Date();
+            const diff = now - d;
+            const mins = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (mins < 1) return '刚刚';
+            if (mins < 60) return mins + ' 分钟前';
+            if (hours < 24) return hours + ' 小时前';
+            if (days < 30) return days + ' 天前';
+            return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+        }
+
+        function renderMarkdown(text) {
+            // Simple markdown: bold, italic, links, blockquote
+            return text
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/`(.+?)`/g, '<code>$1</code>')
+                .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>')
+                .replace(/^&gt; (.+)$/gm, '<span style="color:var(--text-light);font-style:italic;">$1</span>');
+        }
+
+        async function loadComments() {
+            const container = document.getElementById('comments');
+            try {
+                const res = await fetch(API);
+                if (!res.ok) throw new Error('API error');
+                const comments = await res.json();
+
+                if (comments.length === 0) {
+                    container.innerHTML = '<div class="gb-empty">还没有留言，来写第一条吧。</div>';
+                    return;
+                }
+
+                // Show newest first
+                comments.reverse();
+
+                container.innerHTML = comments.map(c => {
+                    const author = c.author?.login || '匿名';
+                    const isMe = author === 'inklotus007';
+                    const displayName = isMe ? '伊卡洛斯' : author;
+                    const color = getAvatarColor(author);
+                    const initial = displayName.charAt(0).toUpperCase();
+
+                    return `
+                        <div class="gb-comment">
+                            <div class="gb-comment-header">
+                                <div class="gb-avatar" style="background:${color};color:#fff;">${initial}</div>
+                                <span class="gb-name">${displayName}</span>
+                                <span class="gb-time">${formatTime(c.created_at)}</span>
+                            </div>
+                            <div class="gb-body">${renderMarkdown(c.body)}</div>
+                        </div>
+                    `;
+                }).join('');
+            } catch(e) {
+                container.innerHTML = '<div class="gb-empty">加载失败，请稍后刷新。</div>';
+            }
+        }
+
+        loadComments();
     </script>
 </body>
 </html>
