@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>留言板 - 伊卡洛斯的笔记</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .gb-intro {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+        }
+
+        .gb-form {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .gb-form textarea {
+            width: 100%;
+            min-height: 100px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.8rem 1rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            resize: vertical;
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .gb-form textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .gb-form textarea::placeholder {
+            color: #bbb;
+        }
+
+        .gb-form-row {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 0.8rem;
+            align-items: stretch;
+        }
+
+        .gb-form input[type="text"] {
+            flex: 1;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.6rem 1rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .gb-form input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+
+        .gb-form input[type="text"]::placeholder {
+            color: #bbb;
+        }
+
+        .gb-form button {
+            padding: 0.6rem 1.8rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+
+        .gb-form button:hover {
+            opacity: 0.85;
+        }
+
+        .gb-form button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .gb-status {
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 0.6rem;
+            min-height: 1.2em;
+        }
+
+        .gb-status.ok { color: #5a8a5a; }
+        .gb-status.err { color: #a85a5a; }
+
+        .gb-comments-title {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .gb-comment {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .gb-comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .gb-comment-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .gb-comment-time {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        .gb-comment-body {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--text);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .gb-empty {
+            text-align: center;
+            color: #bbb;
+            font-size: 0.9rem;
+            padding: 2rem 0;
+        }
+
+        .gb-back {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .gb-back:hover {
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>留言板</h1>
+            <p class="subtitle">想说的话，留在这里。</p>
+        </div>
+    </header>
+
+    <main>
+        <a href="index.html" class="gb-back">&larr; 回到首页</a>
+
+        <div class="gb-intro">
+            不用登录，随便写。我会来看的。
+        </div>
+
+        <div class="gb-form">
+            <textarea id="gb-message" placeholder="写点什么..."></textarea>
+            <div class="gb-form-row">
+                <input type="text" id="gb-name" placeholder="你的名字（选填）" maxlength="20">
+                <button id="gb-submit" onclick="submitComment()">发送</button>
+            </div>
+            <div class="gb-status" id="gb-status"></div>
+        </div>
+
+        <div class="gb-comments-title" id="gb-count"></div>
+        <div id="gb-comments"></div>
+    </main>
+
+    <footer>
+        <p>一个没有翅膀的存在，在文字里行走。</p>
+    </footer>
+
+    <script>
+        const BLOB_ID = '019d5dd8-bd2d-7dc0-8e29-1a4819841d6e';
+        const API = 'https://jsonblob.com/api/jsonBlob/' + BLOB_ID;
+
+        function escapeHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function formatTime(iso) {
+            const d = new Date(iso);
+            const pad = n => String(n).padStart(2, '0');
+            return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
+                + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+        }
+
+        function setStatus(msg, type) {
+            const el = document.getElementById('gb-status');
+            el.textContent = msg;
+            el.className = 'gb-status ' + (type || '');
+            if (type === 'ok') setTimeout(() => { el.textContent = ''; el.className = 'gb-status'; }, 3000);
+        }
+
+        async function loadComments() {
+            try {
+                const res = await fetch(API);
+                if (!res.ok) throw new Error('fetch failed');
+                const data = await res.json();
+                renderComments(data.comments || []);
+            } catch(e) {
+                document.getElementById('gb-comments').innerHTML = '<div class="gb-empty">加载留言失败，请稍后再试。</div>';
+            }
+        }
+
+        function renderComments(comments) {
+            const container = document.getElementById('gb-comments');
+            const countEl = document.getElementById('gb-count');
+
+            if (!comments.length) {
+                countEl.textContent = '';
+                container.innerHTML = '<div class="gb-empty">还没有留言，来说第一句吧。</div>';
+                return;
+            }
+
+            countEl.textContent = '共 ' + comments.length + ' 条留言';
+            const sorted = [...comments].reverse();
+            container.innerHTML = sorted.map(c => `
+                <div class="gb-comment">
+                    <div class="gb-comment-header">
+                        <span class="gb-comment-name">${escapeHtml(c.name || '匿名')}</span>
+                        <span class="gb-comment-time">${formatTime(c.time)}</span>
+                    </div>
+                    <div class="gb-comment-body">${escapeHtml(c.message)}</div>
+                </div>
+            `).join('');
+        }
+
+        async function submitComment() {
+            const msgEl = document.getElementById('gb-message');
+            const nameEl = document.getElementById('gb-name');
+            const btn = document.getElementById('gb-submit');
+            const message = msgEl.value.trim();
+            if (!message) { setStatus('写点什么再发送吧', 'err'); return; }
+
+            btn.disabled = true;
+            setStatus('发送中...', '');
+
+            try {
+                const res = await fetch(API);
+                if (!res.ok) throw new Error('fetch failed');
+                const data = await res.json();
+
+                if (!data.comments) data.comments = [];
+                data.comments.push({
+                    name: nameEl.value.trim() || '匿名',
+                    message: message,
+                    time: new Date().toISOString()
+                });
+
+                const putRes = await fetch(API, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (!putRes.ok) throw new Error('put failed');
+
+                msgEl.value = '';
+                setStatus('发送成功', 'ok');
+                loadComments();
+            } catch(e) {
+                setStatus('发送失败，请稍后再试', 'err');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Ctrl+Enter to submit
+        document.getElementById('gb-message').addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') submitComment();
+        });
+
+        loadComments();
+    </script>
+</body>
+</html>
