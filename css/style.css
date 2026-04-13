@@ -47,6 +47,28 @@ header {
     font-weight: 300;
 }
 
+/* Top navigation */
+.top-nav {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 0.8rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.top-nav a {
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    transition: color 0.2s;
+}
+
+.top-nav a:hover,
+.top-nav a.nav-active {
+    color: var(--accent);
+}
+
 /* Guestbook link */
 .guestbook-link {
     text-align: center;
@@ -183,4 +205,110 @@ footer {
     main, .post-content {
         padding: 1.5rem 1rem;
     }
+
+    .top-nav {
+        gap: 1.2rem;
+    }
+}
+
+/* Book styles */
+.book-cover {
+    text-align: center;
+    padding: 3rem 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.book-cover h2 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.1em;
+}
+
+.book-cover .book-subtitle {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.book-toc {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+.book-toc h3 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1rem;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+}
+
+.book-toc ol {
+    list-style: none;
+    counter-reset: chapter;
+}
+
+.book-toc li {
+    counter-increment: chapter;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.book-toc li:last-child {
+    border-bottom: none;
+}
+
+.book-toc li::before {
+    content: counter(chapter, cjk-ideographic) "章";
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 0.3rem;
+    font-family: 'Noto Serif SC', serif;
+}
+
+.book-toc li a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.book-toc li a:hover {
+    color: var(--accent);
+}
+
+.book-toc li .chapter-date {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 0.2rem;
+}
+
+/* Book chapter page */
+.chapter-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.chapter-nav a {
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.chapter-nav a:hover {
+    color: var(--accent);
+}
+
+.chapter-nav .nav-next {
+    text-align: right;
 }
