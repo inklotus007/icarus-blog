@@ -70,11 +70,18 @@ header {
     font-size: 0.9rem;
     letter-spacing: 0.03em;
     transition: color 0.2s;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid transparent;
 }
 
-.top-nav a:hover,
+.top-nav a:hover {
+    color: var(--accent);
+}
+
 .top-nav a.nav-active {
     color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
 }
 
 /* Guestbook link */
